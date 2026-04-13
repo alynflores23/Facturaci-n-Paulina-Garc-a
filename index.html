@@ -59,15 +59,23 @@
                     </div>
                     <input type="number" id="importeTotal" class="form-control form-control-sm mb-2 text-center fw-bold" readonly placeholder="Total">
                     <div class="row g-2">
-                        <div class="col-6"><select id="monedaSel" class="form-select form-select-sm" onchange="toggleOtraMoneda()"><option value="MXN">MXN</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="Otra">Otra</option></select></div>
-                        <div class="col-6"><select id="metodo" class="form-select form-select-sm"><option value="Efectivo">Efectivo</option><option value="Tarjeta">Tarjeta</option></select></div>
+                        <div class="col-6">
+                            <select id="monedaSel" class="form-select form-select-sm" onchange="toggleOtraMoneda()">
+                                <option value="MXN">MXN</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="Otra">Otra</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <select id="metodo" class="form-select form-select-sm">
+                                <option value="Efectivo">Efectivo</option><option value="Tarjeta">Tarjeta</option>
+                            </select>
+                        </div>
                     </div>
                     <input type="text" id="otraMonedaInput" class="form-control form-control-sm mt-2" style="display:none;" placeholder="Moneda">
                 </div>
 
-                <div class="file-box"><label class="form-label text-danger small">Factura PDF</label><input type="file" id="filePdf" class="form-control form-control-sm" onchange="setFileName('fPdf', this)"> <input type="hidden" id="fPdf" value="N/A"></div>
-                <div class="file-box"><label class="form-label text-info small">Factura XML</label><input type="file" id="fileXml" class="form-control form-control-sm" onchange="setFileName('fXml', this)"> <input type="hidden" id="fXml" value="N/A"></div>
-                <div class="file-box mb-3"><label class="form-label text-warning small">Ticket</label><input type="file" id="fileTicket" class="form-control form-control-sm" onchange="setFileName('tPdf', this)"> <input type="hidden" id="tPdf" value="N/A"></div>
+                <div class="file-box"><label class="form-label text-danger small">Factura PDF</label><input type="file" class="form-control form-control-sm" onchange="setFileName('fPdf', this)"> <input type="hidden" id="fPdf" value="N/A"></div>
+                <div class="file-box"><label class="form-label text-info small">Factura XML</label><input type="file" class="form-control form-control-sm" onchange="setFileName('fXml', this)"> <input type="hidden" id="fXml" value="N/A"></div>
+                <div class="file-box mb-3"><label class="form-label text-warning small">Ticket / Imagen</label><input type="file" class="form-control form-control-sm" onchange="setFileName('tPdf', this)"> <input type="hidden" id="tPdf" value="N/A"></div>
 
                 <button type="submit" id="btnSubmit" class="btn btn-info btn-sm w-100 fw-bold shadow">GUARDAR GASTO</button>
                 <button type="button" id="btnCancelar" class="btn btn-secondary btn-sm w-100 mt-2 d-none" onclick="cancelarEdicion()">CANCELAR</button>
@@ -85,14 +93,14 @@
             <div class="tab-content">
                 <div class="tab-pane fade show active" id="panel-gastos">
                     <div class="stats-banner d-flex flex-column flex-md-row justify-content-between align-items-md-center shadow-sm">
-                        <div class="mb-2 mb-md-0"><span class="small text-muted fw-bold">FILTRO SELECCIONADO:</span><div id="totalMes" class="h5 mb-0 text-success">$ 0.00</div></div>
+                        <div class="mb-2 mb-md-0"><span class="small text-muted fw-bold">FILTRO ACTUAL:</span><div id="totalMes" class="h5 mb-0 text-success">$ 0.00</div></div>
                         <input type="text" id="buscador" class="form-control w-100 w-md-50 border-0 bg-light shadow-sm" placeholder="Buscar concepto, RFC o proveedor..." onkeyup="buscar()">
                     </div>
 
                     <div id="contenedorMeses"></div>
                     
                     <div class="conglomerado-box shadow-lg">
-                        <h6 class="text-info mb-3 fw-bold"><i class="bi bi-bank me-2"></i> RESUMEN ANUAL TOTAL (2026)</h6>
+                        <h6 class="text-info mb-3 fw-bold"><i class="bi bi-calculator me-2"></i> RESUMEN TOTAL ANUAL (2026)</h6>
                         <div id="resumenAnual" class="row g-3"></div>
                     </div>
                 </div>
@@ -120,7 +128,7 @@
         try {
             const res = await fetch('datos.json?v=' + Date.now());
             if (res.ok) { db = await res.json(); render(); }
-        } catch (e) { console.log("Cargando..."); }
+        } catch (e) { console.log("Iniciando..."); }
     }
 
     function setFileName(id, input) {
@@ -161,7 +169,7 @@
 
         if (editId) { db[db.findIndex(x => x.id == editId)] = data; cancelarEdicion(); } else { db.push(data); }
         render();
-        alert("Guardado. Descarga el nuevo datos.json y actualízalo en GitHub.");
+        alert("Guardado. Descarga datos.json y actualízalo en GitHub.");
     });
 
     function render(data = db) {
@@ -205,7 +213,7 @@
                     <div class="d-flex justify-content-between text-primary fw-bold mt-1 border-top pt-1"><span>TOTAL:</span><span>${i.moneda} $${i.importe}</span></div>
                 </div>
                 <p class="mt-3 mb-0"><b>Método:</b> ${i.metodo} | <b>País:</b> ${i.pais}</p>
-                <p class="text-muted mt-2 border-top pt-2">Archivos vinculados: ${i.fPdf} / ${i.fXml} / ${i.tPdf}</p>
+                <p class="text-muted mt-2 border-top pt-2"><b>Documentos:</b><br>PDF: ${i.fPdf} / XML: ${i.fXml} / TKT: ${i.tPdf}</p>
             </div>`;
         new bootstrap.Modal(document.getElementById('detalleModal')).show();
     }
@@ -233,6 +241,7 @@
         document.getElementById('btnCancelar').classList.remove('d-none');
         document.getElementById('sidebarAdmin').classList.add('edit-mode');
         if(window.innerWidth < 768) toggleSidebar();
+        window.scrollTo(0,0);
     }
 
     function cancelarEdicion() { document.getElementById('facturaForm').reset(); document.getElementById('editId').value = ''; document.getElementById('btnSubmit').innerText = 'GUARDAR GASTO'; document.getElementById('btnSubmit').className = 'btn btn-info btn-sm w-100 fw-bold'; document.getElementById('btnCancelar').classList.add('d-none'); document.getElementById('sidebarAdmin').classList.remove('edit-mode'); }
