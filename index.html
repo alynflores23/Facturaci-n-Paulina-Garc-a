@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"> 
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Paulina García - Videojet</title>
+    <title>Portal Paulina García - Videojet</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; }
-        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
         .sidebar { background: var(--primary); color: white; min-height: 100vh; padding: 25px; transition: 0.3s; }
         @media (max-width: 768px) {
             .sidebar { position: fixed; left: -100%; width: 100%; z-index: 1050; height: 100%; overflow-y: auto; }
@@ -19,8 +19,10 @@
         .stats-banner { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; border-left: 5px solid var(--success); }
         .concepto-link { color: var(--accent); cursor: pointer; text-decoration: underline; font-weight: bold; }
         .form-label { font-size: 0.7rem; font-weight: bold; color: #adb5bd; text-transform: uppercase; }
+        .file-box { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #3e4f5f; }
         .btn-flotante { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--accent); color: white; border-radius: 50%; border: none; font-size: 24px; z-index: 1060; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         @media (max-width: 768px) { .btn-flotante { display: block; } }
+        .edit-mode { border: 3px solid #f1c40f !important; }
     </style>
 </head>
 <body>
@@ -30,49 +32,69 @@
 <div class="container-fluid">
     <div class="row">
         <aside class="col-md-3 sidebar shadow-lg" id="sidebarAdmin">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="text-info fw-bold mb-0">NUEVO GASTO</h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="text-info fw-bold mb-0" id="formTitle">NUEVO GASTO</h6>
                 <button class="btn btn-sm btn-outline-light d-md-none" onclick="toggleSidebar()">X</button>
             </div>
+            
             <form id="facturaForm">
                 <input type="hidden" id="editId">
-                <div class="mb-2"><label class="form-label">Concepto</label><input type="text" id="concepto" class="form-control form-control-sm" required></div>
+                <div class="mb-2"><label class="form-label text-warning">Concepto</label><input type="text" id="concepto" class="form-control form-control-sm" required></div>
                 <div class="mb-2"><label class="form-label">Proveedor</label><input type="text" id="nombreProv" class="form-control form-control-sm" required></div>
                 <div class="mb-2"><label class="form-label">RFC</label><input type="text" id="rfc" class="form-control form-control-sm" required></div>
+                
                 <div class="row g-2 mb-2">
                     <div class="col-6"><label class="form-label">Fecha</label><input type="date" id="fecha" class="form-control form-control-sm" required></div>
-                    <div class="col-6"><label class="form-label">Ubicación</label><select id="paisSel" class="form-select form-select-sm"><option value="México">México</option><option value="Extranjero">Extranjero</option></select></div>
+                    <div class="col-6">
+                        <label class="form-label">País</label>
+                        <select id="paisSel" class="form-select form-select-sm" onchange="toggleOtroPais()">
+                            <option value="México">México</option><option value="Extranjero">Extranjero</option>
+                        </select>
+                    </div>
                 </div>
+                <input type="text" id="otroPaisInput" class="form-control form-control-sm mb-2" style="display:none;" placeholder="¿Qué país?">
+
                 <div class="p-2 border rounded border-secondary bg-dark bg-opacity-25 mb-3">
-                    <div class="row g-2">
+                    <div class="row g-2 mb-2">
                         <div class="col-6"><label class="form-label text-white">Sin IVA</label><input type="number" step="0.01" id="subtotal" class="form-control form-control-sm" onkeyup="sumarTotal()" required></div>
                         <div class="col-6"><label class="form-label text-white">IVA</label><input type="number" step="0.01" id="iva" class="form-control form-control-sm" onkeyup="sumarTotal()" required></div>
                     </div>
-                    <input type="number" id="importeTotal" class="form-control form-control-sm mt-2 text-center fw-bold" readonly placeholder="Total">
-                    <div class="row g-2 mt-2">
-                        <div class="col-6"><select id="moneda" class="form-select form-select-sm"><option value="MXN">MXN</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
-                        <div class="col-6"><select id="metodo" class="form-select form-select-sm"><option value="Efectivo">Efectivo</option><option value="Tarjeta">Tarjeta</option></select></div>
+                    <input type="number" id="importeTotal" class="form-control form-control-sm mb-2 text-center fw-bold" readonly placeholder="Total">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <select id="monedaSel" class="form-select form-select-sm" onchange="toggleOtraMoneda()">
+                                <option value="MXN">MXN</option><option value="USD">USD</option><option value="Otra">Otra</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <select id="metodo" class="form-select form-select-sm">
+                                <option value="Efectivo">Efectivo</option><option value="Tarjeta">Tarjeta</option>
+                            </select>
+                        </div>
                     </div>
+                    <input type="text" id="otraMonedaInput" class="form-control form-control-sm mt-2" style="display:none;" placeholder="Nombre Moneda">
                 </div>
-                <div class="small text-info mb-2">Archivos (Nombres exactos):</div>
-                <input type="text" id="fPdf" class="form-control form-control-sm mb-1" placeholder="Nombre.pdf">
-                <input type="text" id="tPdf" class="form-control form-control-sm mb-3" placeholder="Ticket.jpg">
-                <button type="submit" class="btn btn-info btn-sm w-100 fw-bold">GUARDAR EN LOCAL</button>
-                <hr>
-                <button type="button" class="btn btn-outline-warning btn-sm w-100" onclick="exportarJSON()">GENERAR ARCHIVO PARA GITHUB</button>
+
+                <div class="file-box"><label class="form-label text-danger small">PDF</label><input type="text" id="fPdf" class="form-control form-control-sm" placeholder="Nombre.pdf"></div>
+                <div class="file-box mb-3"><label class="form-label text-warning small">Ticket</label><input type="text" id="tPdf" class="form-control form-control-sm" placeholder="Ticket.jpg"></div>
+
+                <button type="submit" id="btnSubmit" class="btn btn-info btn-sm w-100 fw-bold shadow">AÑADIR GASTO</button>
+                <button type="button" id="btnCancelar" class="btn btn-secondary btn-sm w-100 mt-2 d-none" onclick="cancelarEdicion()">CANCELAR</button>
+                <hr class="border-secondary">
+                <button type="button" class="btn btn-outline-light btn-sm w-100" onclick="exportarJSON()">1. GENERAR DATOS.JSON</button>
             </form>
         </aside>
 
         <main class="col-md-9 main-content">
-            <div class="stats-banner d-flex justify-content-between align-items-center shadow-sm">
-                <div><span class="small text-muted fw-bold">TOTAL SELECCIONADO:</span><div id="totalMes" class="h5 mb-0 text-success">$ 0.00</div></div>
-                <h6 class="text-primary mb-0 d-none d-md-block">VTM100722SD9</h6>
+            <div class="stats-banner d-flex flex-column flex-md-row justify-content-between align-items-md-center shadow-sm">
+                <div class="mb-2 mb-md-0"><span class="small text-muted fw-bold">TOTAL SELECCIONADO:</span><div id="totalMes" class="h5 mb-0 text-success">$ 0.00</div></div>
+                <input type="text" id="buscador" class="form-control w-100 w-md-50 border-0 bg-light shadow-sm" placeholder="Buscar por RFC, Concepto o Proveedor..." onkeyup="buscar()">
             </div>
 
             <div class="table-container">
-                <table class="table table-hover align-middle small" style="min-width: 700px;">
-                    <thead class="table-light">
-                        <tr><th><input type="checkbox" onclick="checkAll()"></th><th>FECHA</th><th>CONCEPTO</th><th>PROVEEDOR</th><th>TOTAL</th><th>DOCS</th><th></th></tr>
+                <table class="table table-hover align-middle" style="font-size: 0.8rem; min-width: 800px;">
+                    <thead class="table-light text-muted">
+                        <tr><th><input type="checkbox" id="master" onclick="checkAll()"></th><th>FECHA</th><th>CONCEPTO</th><th>PROVEEDOR</th><th>TOTAL</th><th>DOCS</th><th></th></tr>
                     </thead>
                     <tbody id="tablaBody"></tbody>
                 </table>
@@ -84,61 +106,105 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let db = [];
-    const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+    const mesesNombres = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
-    // Cargar datos automáticamente desde el archivo de GitHub
-    async function cargarDesdeNube() {
+    async function loadData() {
         try {
-            const response = await fetch('datos.json');
-            if(response.ok) {
-                db = await response.json();
-                render();
-            }
-        } catch (e) { console.log("Iniciando sin datos previos."); }
+            const res = await fetch('datos.json?v=' + Date.now());
+            if (res.ok) { db = await res.json(); render(); }
+        } catch (e) { console.log("Iniciando..."); }
     }
 
     function toggleSidebar() { document.getElementById('sidebarAdmin').classList.toggle('active'); }
-    function sumarTotal() { const s = parseFloat(document.getElementById('subtotal').value)||0; const i = parseFloat(document.getElementById('iva').value)||0; document.getElementById('importeTotal').value = (s+i).toFixed(2); }
+    function toggleOtroPais() { document.getElementById('otroPaisInput').style.display = (document.getElementById('paisSel').value === 'Extranjero') ? 'block' : 'none'; }
+    function toggleOtraMoneda() { document.getElementById('otraMonedaInput').style.display = (document.getElementById('monedaSel').value === 'Otra') ? 'block' : 'none'; }
+    function sumarTotal() { const s = parseFloat(document.getElementById('subtotal').value) || 0; const i = parseFloat(document.getElementById('iva').value) || 0; document.getElementById('importeTotal').value = (s + i).toFixed(2); }
 
     document.getElementById('facturaForm').addEventListener('submit', (e) => {
         e.preventDefault();
+        const editId = document.getElementById('editId').value;
+        const pFinal = document.getElementById('paisSel').value === 'Extranjero' ? document.getElementById('otroPaisInput').value : 'México';
+        const mFinal = document.getElementById('monedaSel').value === 'Otra' ? document.getElementById('otraMonedaInput').value : document.getElementById('monedaSel').value;
+
         const data = {
-            id: Date.now(),
+            id: editId ? parseInt(editId) : Date.now(),
             concepto: document.getElementById('concepto').value.toUpperCase(),
             nombreProv: document.getElementById('nombreProv').value.toUpperCase(),
             rfc: document.getElementById('rfc').value.toUpperCase(),
             fecha: document.getElementById('fecha').value,
             mesNum: document.getElementById('fecha').value.split('-')[1],
-            anio: 2026,
-            importe: document.getElementById('importeTotal').value,
-            moneda: document.getElementById('moneda').value,
+            anio: document.getElementById('fecha').value.split('-')[0],
+            subtotal: parseFloat(document.getElementById('subtotal').value),
+            iva: parseFloat(document.getElementById('iva').value),
+            importe: parseFloat(document.getElementById('importeTotal').value),
+            moneda: mFinal.toUpperCase(),
+            metodo: document.getElementById('metodo').value,
+            pais: pFinal.toUpperCase(),
             fPdf: document.getElementById('fPdf').value || 'N/A',
             tPdf: document.getElementById('tPdf').value || 'N/A'
         };
-        db.push(data);
+
+        if (editId) {
+            const idx = db.findIndex(x => x.id == editId);
+            db[idx] = data;
+            cancelarEdicion();
+        } else {
+            db.push(data);
+        }
         render();
-        alert("Agregado. Ahora haz clic en 'GENERAR ARCHIVO' y súbelo a GitHub.");
+        alert("Guardado en la tabla. Ahora recuerda descargar el archivo datos.json y subirlo a GitHub.");
     });
 
-    function render() {
+    function render(data = db) {
         const body = document.getElementById('tablaBody');
         body.innerHTML = '';
-        db.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
-        db.forEach(item => {
-            const folder = `${meses[parseInt(item.mesNum)-1]} 2026`;
+        data.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+        data.forEach(item => {
+            const folder = `${mesesNombres[parseInt(item.mesNum)-1]} ${item.anio}`;
             body.innerHTML += `<tr>
                 <td><input type="checkbox" class="row-check" data-id="${item.id}" onchange="calcSum()"></td>
                 <td><small>${item.fecha}</small></td>
-                <td class="fw-bold text-primary">${item.concepto}</td>
-                <td>${item.nombreProv}</td>
+                <td><span class="fw-bold text-primary">${item.concepto}</span><br><small class="text-muted">${item.metodo} - ${item.pais}</small></td>
+                <td><div class="small fw-bold">${item.nombreProv}</div><small class="text-muted">${item.rfc}</small></td>
                 <td class="fw-bold">${item.moneda} $${item.importe}</td>
                 <td>
-                    <a href="Documentos/${folder}/Facturas/${item.fPdf}" target="_blank" class="me-2"><i class="bi bi-file-pdf text-danger"></i></a>
-                    <a href="Documentos/${folder}/Tickets/${item.tPdf}" target="_blank"><i class="bi bi-ticket text-warning"></i></a>
+                    <a href="Documentos/${folder}/Facturas/${item.fPdf}" target="_blank" class="text-danger me-2"><i class="bi bi-file-pdf"></i></a>
+                    <a href="Documentos/${folder}/Tickets/${item.tPdf}" target="_blank" class="text-warning"><i class="bi bi-ticket"></i></a>
                 </td>
-                <td><button class="btn btn-sm text-danger" onclick="del(${item.id})"><i class="bi bi-trash"></i></button></td>
+                <td>
+                    <button class="btn btn-sm text-primary p-0 me-2" onclick="prepararEdicion(${item.id})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm text-danger p-0" onclick="del(${item.id})"><i class="bi bi-trash"></i></button>
+                </td>
             </tr>`;
         });
+    }
+
+    function prepararEdicion(id) {
+        const item = db.find(x => x.id == id);
+        document.getElementById('editId').value = item.id;
+        document.getElementById('concepto').value = item.concepto;
+        document.getElementById('nombreProv').value = item.nombreProv;
+        document.getElementById('rfc').value = item.rfc;
+        document.getElementById('fecha').value = item.fecha;
+        document.getElementById('subtotal').value = item.subtotal;
+        document.getElementById('iva').value = item.iva;
+        document.getElementById('fPdf').value = item.fPdf;
+        document.getElementById('tPdf').value = item.tPdf;
+        sumarTotal();
+        document.getElementById('btnSubmit').innerText = 'ACTUALIZAR';
+        document.getElementById('btnSubmit').className = 'btn btn-warning btn-sm w-100 fw-bold';
+        document.getElementById('btnCancelar').classList.remove('d-none');
+        document.getElementById('sidebarAdmin').classList.add('edit-mode');
+        window.scrollTo(0,0);
+    }
+
+    function cancelarEdicion() {
+        document.getElementById('facturaForm').reset();
+        document.getElementById('editId').value = '';
+        document.getElementById('btnSubmit').innerText = 'AÑADIR GASTO';
+        document.getElementById('btnSubmit').className = 'btn btn-info btn-sm w-100 fw-bold';
+        document.getElementById('btnCancelar').classList.add('d-none');
+        document.getElementById('sidebarAdmin').classList.remove('edit-mode');
     }
 
     function exportarJSON() {
@@ -149,15 +215,18 @@
         dlAnchor.click();
     }
 
+    function buscar() { const t = document.getElementById('buscador').value.toUpperCase(); render(db.filter(x => x.concepto.includes(t) || x.rfc.includes(t) || x.nombreProv.includes(t))); }
+    function checkAll() { const m = document.getElementById('master').checked; document.querySelectorAll('.row-check').forEach(c => c.checked = m); calcSum(); }
+    
     function calcSum() {
         const sel = document.querySelectorAll('.row-check:checked');
-        let total = 0; sel.forEach(cb => { total += parseFloat(db.find(x=>x.id==cb.dataset.id).importe); });
-        document.getElementById('totalMes').innerText = "$ " + total.toLocaleString();
+        let totals = {}; sel.forEach(cb => { const e = db.find(x => x.id == cb.dataset.id); totals[e.moneda] = (totals[e.moneda] || 0) + e.importe; });
+        document.getElementById('totalMes').innerHTML = sel.length === 0 ? "$ 0.00" : Object.entries(totals).map(v => `<span class="me-3">${v[0]} $${v[1].toLocaleString()}</span>`).join(' | ');
     }
 
-    function del(id) { db = db.filter(x => x.id !== id); render(); }
+    function del(id) { if(confirm('¿Borrar?')) { db = db.filter(x => x.id !== id); render(); } }
 
-    cargarDesdeNube();
+    loadData();
 </script>
 </body>
 </html>
